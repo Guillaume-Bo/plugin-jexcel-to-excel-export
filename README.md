@@ -23,7 +23,7 @@ The spreadsheet properties that can be changed using this plugin:
 This is an official Jexcel Plugin.<br><br>
 
 <h2>License</h2>
-This plugin a free MIT plugin.<br><br>
+This plugin is licensed to be used together with Jexcel Pro.<br><br>
 
 <h2>Example</h2>
 A following working example can be found <a href='https://jexcel.net/plugins/jexcel-to-excel'>here</a><br><br>
