@@ -46,8 +46,7 @@ A following working example can be found <a href='https://jexcel.net/plugins/jex
 
 &#60;script>
 jexcel(document.getElementById('spreadsheet'), {
-    minDimension: [10,10],
-    license: '<?php echo $this->view['license']; ?>',
+    minDimension: [10,10]
 });
 &#60;/script>
 &#60;/html>
