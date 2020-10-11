@@ -5,7 +5,7 @@
  * Website: https://jexcel.net
  * Description: Create amazing web based spreadsheets.
  *
- * This software required a license. Visit: https://jexcel.net/v7
+ * This software is free to use. Visit: https://jexcel.net/v7
  */
 
 jexcel.download = (function(el) {
