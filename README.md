@@ -4,7 +4,9 @@
 
 jExcel, a lightweight Vanilla JavaScript plugin, can help you create exceptional web-based interactive tables and spreadsheets. Compatible with most widely-used spreadsheet software, such as Excel or Google Spreadsheet, it offers users an unrivalled Excel-like user experience. It also works well with prominent modern frameworks and flexibly utilizes a large collection of events, extensions and configurations to meet different application requirements. Impress your clients with a better user experience and a great dynamic interactive data management tool. The jexcel extensions can be used to enhance the native capabilities.
 
-Visit the jexcel <a href='https://jexcel.net/v7'>spreadsheet</a> website for more information.<br><br>
+For more information:<br>
+<a href='https://jexcel.net/v7'>Jexcel Spreadsheet</a> Pro distribution.<br>
+<a href='https://bossanova.uk/jexcel/v4'>Jexcel Spreadsheet</a> CE distribution.<br><br>
 
 ## plugin-jexcel-to-excel-export
 A plugin to create a XLS file from a jexcel spreadsheet.
@@ -23,7 +25,7 @@ The spreadsheet properties that can be changed using this plugin:
 This is an official Jexcel Plugin.<br><br>
 
 <h2>License</h2>
-This plugin is licensed to be used together with Jexcel Pro.<br><br>
+Copyrights to Paul Hodel. Free to use.<br><br>
 
 <h2>Example</h2>
 A following working example can be found <a href='https://jexcel.net/plugins/jexcel-to-excel'>here</a><br><br>
