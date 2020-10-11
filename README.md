@@ -11,7 +11,7 @@ For more information:<br>
 ## plugin-jexcel-to-excel-export
 A plugin to create a XLS file from a jexcel spreadsheet.
 
-<img src='https://jexcel.net/templates/default/img/export-spreadsheet-plugin-icon.png' width='80' align='left'>
+<img src='https://jexcel.net/templates/default/img/jexcel-to-excel-plugin-icon.png' width='80' align='left'>
 
 <h2 style='margin-bottom: 0px;'>Jexcel Spreadsheet to Excel</h2>
 
