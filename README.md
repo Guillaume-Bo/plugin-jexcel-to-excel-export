@@ -36,7 +36,6 @@ A following working example can be found <a href='https://jexcel.net/plugins/jex
 &#60;script src="https://jexcel.net/v7/jsuites.js">&#60;/script>
 &#60;link rel="stylesheet" href="https://jexcel.net/v7/jexcel.css" type="text/css" />
 &#60;link rel="stylesheet" href="https://jexcel.net/v7/jsuites.css" type="text/css" />
-&#60;link rel="stylesheet" href="https://jexcel.net/v7/jsuites.layout.css" type="text/css" />
 
 &#60;script src="https://jexcel.net/plugins/jexcel.download.js">&#60;/script>
 
