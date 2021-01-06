@@ -8,13 +8,37 @@
  * This software is free to use. Visit: https://jexcel.net/v7
  */
 
-jexcel.download = (function(el) {
+jexcel.download = (function(el, options){
     var data = '';
 
     var plugin = {};
     var worksheets = [];
     var styles = {};
     var styleIndex = 1;
+    
+    // Set options
+    plugin.options = Object.assign({},options);
+    
+    // Options
+    var defaultOptions = {
+         filename: 'jexcel',
+         author: 'Jexcel',
+         sheets: null, // Specifics sheet to download => null = all, array specifics index of sheets, int specific index of sheet
+         header: false,
+         computedStyle: false,
+         styleHeader: 'border: 1px solid #cccccc;background-color: #f3f3f3;text-align: center;',
+    }
+    
+
+    // Set default value
+    if(options==null) {
+       plugin.options = {};
+    }
+    for(var property in defaultOptions) {
+        if (!plugin.options.hasOwnProperty(property) || plugin.options[property]==null ) {
+            plugin.options[property] = defaultOptions[property];
+        }
+    } 
 
     /**
      * Helpers to deal with the export to jexcel to excel
@@ -25,15 +49,66 @@ jexcel.download = (function(el) {
             // Create XML cell
             var get = function(o) {
                 if (! o.data && ! o.comments) {
-                    return '<Cell/>';
+                    return `<Cell${o.styleId}${o.merge}/>`;
                 } else {
-                    return `<Cell${o.styleId}${o.formula}><Data ss:Type="${o.type}">${o.data}</Data>${o.comments}</Cell>`;
+                    return `<Cell${o.styleId}${o.formula}${o.merge}><Data ss:Type="${o.type}">${o.data}</Data>${o.comments}</Cell>`;
                 }
             }
 
             // Containers
             var rows = [];
             var cols = [];
+            
+            // Header
+            if(plugin.options.header) {
+                if(this.instance.options.nestedHeaders && this.instance.options.nestedHeaders.length > 0) {
+                    // Flexible way to handle nestedheaders
+                    for (var j = 0; j < this.instance.options.nestedHeaders.length; j++) {
+                        cols = [];
+                        for(var i = 0; i < this.instance.options.nestedHeaders[j].length; i++) {
+                            // Create cells
+                            var o = { styleId:'', type:'', data:'', formula:'', comments:'', merge:''};
+                            // Column name
+                            o.data = (this.instance.options.nestedHeaders[j][i].title);
+                            // Style
+                            o.styleId = plugin.makeStyle(plugin.options.styleHeader);
+
+                            // Merge (colspan)
+                            if(this.instance.options.nestedHeaders[j][i].colspan) {
+                                o.merge = plugin.makeMerge(parseInt(this.instance.options.nestedHeaders[j][i].colspan)-1);
+                            }
+
+                            // Type
+                            o.type = 'String';
+
+                            // Add value
+                            cols.push(get(o));
+                        }
+                        rows.push('<Row>' + cols.join('') + '</Row>');
+                    }
+                }
+                
+                cols = [];
+                for (var ite_col in this.instance.headers) {
+                    // Create cells
+                    var o = { styleId:'', type:'', data:'', formula:'', comments:'', merge:''};
+                    // Column name
+                    o.data = (this.instance.headers[ite_col].outerText||this.instance.headers[ite_col].innerHTML);
+                    // Style
+                    if(plugin.options.computedStyle) {
+                        o.styleId = plugin.makeStyle(window.getComputedStyle(this.instance.headers[ite_col], null).cssText);
+                    } else {
+                        o.styleId = plugin.makeStyle(plugin.options.styleHeader);
+                    }
+                    // Type
+                    o.type = 'String';
+                    
+                    // Add value
+                    cols.push(get(o));
+                }
+                
+                rows.push('<Row>' + cols.join('') + '</Row>');
+            }
 
             // Get data
             this.data = this.instance.data(null, false, false);
@@ -41,7 +116,7 @@ jexcel.download = (function(el) {
                 cols = [];
                 for (var i = 0; i < this.data[j].length; i++) {
                     // Create cells
-                    var o = { styleId:'', type:'', data:'', formula:'' };
+                    var o = { styleId:'', type:'', data:'', formula:'', merge:'' };
                     // Column name
                     o.columnName = jexcel.helpers.getColumnNameFromCoords(i, j);
                     // Set data;
@@ -50,6 +125,8 @@ jexcel.download = (function(el) {
                     o.comments = this.getComments(o.columnName);
                     // Style
                     o.styleId = this.getStyle(o.columnName, i, j);
+                    // Merge
+                    o.merge = this.getMerge(o.columnName);
                     // Type
                     if (this.instance.options.columns[i].type == 'calendar') {
                         o.styleId = ' ss:StyleID="calendar"';
@@ -130,26 +207,70 @@ jexcel.download = (function(el) {
 
         o.getStyle = function(columnName, i, j) {
             if (this.instance.records[j][i].element) {
-                var val = this.instance.records[j][i].element.getAttribute('style');
+                if(plugin.options.computedStyle) {
+                    var val = window.getComputedStyle(this.instance.records[j][i].element, null).cssText;
+                } else {
+                    var val = this.instance.records[j][i].element.getAttribute('style');
+                }
             } else {
                 var val = this.instance.getStyle(columnName);
             }
+
             if (val) {
-                if (! styles[val]) {
-                    styles[val] = {
-                        id: styleIndex++,
-                        content: plugin.applyStyle(val),
-                    }
-                }
-                return ' ss:StyleID="' + styles[val].id + '"';
+                return plugin.makeStyle(val);
             } else {
                 return '';
             }
+        }
+        
+        o.getMerge = function(columnName) {
+            var merged = this.instance.getMerge();
+            if(merged[columnName]) {
+                var mAcross = parseInt(merged[columnName][0])-1;
+                var mDown = parseInt(merged[columnName][1])-1;
+                
+                return plugin.makeMerge(mAcross, mDown);
+            }
+            
+            return '';
         }
 
         return o;
     }
 
+    /**
+     * make XML for merge cells
+     * @param {type} Across
+     * @param {type} Down
+     * @returns {String}
+     */
+    plugin.makeMerge = function(Across, Down) {
+        var xmlProperties = "";
+        
+        if(Across) {
+            xmlProperties += ' ss:MergeAcross="' + Across + '"';
+        }
+        if(Down) {
+            xmlProperties += ' ss:MergeDown="' + Across + '"';
+        }
+        
+        return xmlProperties;
+    }
+    
+    /**
+     * make XML for style cells
+     * @param {type} style
+     * @returns {String}
+     */
+    plugin.makeStyle = function(style) {
+        if (! styles[style]) {
+            styles[style] = {
+                id: styleIndex++,
+                content: plugin.applyStyle(style),
+            }
+        }
+        return ' ss:StyleID="' + styles[style].id + '"';
+    }
 
     /**
      * Parse the CSS style
@@ -208,7 +329,7 @@ jexcel.download = (function(el) {
            Font.push('ss:Italic="1"');
        }
 
-       if (css['font-weight']) {
+       if (css['font-weight'] && css['font-weight'] == 'bold') {
            Font.push('ss:Bold="1"');
        }
 
@@ -225,8 +346,10 @@ jexcel.download = (function(el) {
        }
 
        if (css['color']) {
-           var v = css['color'].toUpperCase().trim();
-           Font.push('ss:Color="' + plugin.rgbToHex(v) + '"');
+           var v = plugin.rgbToHex(css['color'].toUpperCase().trim());
+           if(v) {
+              Font.push('ss:Color="' + v + '"');
+           }
        }
 
        if (css['font-family']) {
@@ -328,7 +451,9 @@ jexcel.download = (function(el) {
 
        if (css['background-color']) {
            var v = plugin.rgbToHex(css['background-color']);
-           style.push('<Interior ss:Color="'+v+'" ss:Pattern="Solid"/>');
+           if(v) {
+              style.push('<Interior ss:Color="'+v+'" ss:Pattern="Solid"/>');
+           }
        }
 
        return style.join('');
@@ -371,6 +496,7 @@ jexcel.download = (function(el) {
      */
     plugin.rgbToHex = function(color) {
         color = ""+ color;
+        color = color.toLowerCase();
         if (!color || color.indexOf("rgb") < 0) {
             return color;
         }
@@ -379,10 +505,31 @@ jexcel.download = (function(el) {
             return color;
         }
 
-        var nums = /(.*?)rgb\((\d+),\s*(\d+),\s*(\d+)\)/i.exec(color),
-            r = parseInt(nums[2], 10).toString(16),
-            g = parseInt(nums[3], 10).toString(16),
-            b = parseInt(nums[4], 10).toString(16);
+        if(color.indexOf("rgba")>-1) {
+            var nums = /(.*?)rgba\((\d+),\s*(\d+),\s*(\d+),\s*(\d+)\)/i.exec(color),
+                a = parseInt(nums[2], 10),
+                r = parseInt(nums[3], 10),
+                g = parseInt(nums[4], 10),
+                b = parseInt(nums[5], 10);
+        
+                if(a==0) {
+                    return ""; // Color transparent
+                }
+        
+                // Convert to RGB
+                r = Math.round(((1 - a) * 255) + (a * r));
+                g = Math.round(((1 - a) * 255) + (a * g));
+                b = Math.round(((1 - a) * 255) + (a * b));
+                
+                r = r.toString(16),
+                g = g.toString(16),
+                b = b.toString(16);
+        } else {
+            var nums = /(.*?)rgb\((\d+),\s*(\d+),\s*(\d+)\)/i.exec(color),
+                r = parseInt(nums[2], 10).toString(16),
+                g = parseInt(nums[3], 10).toString(16),
+                b = parseInt(nums[4], 10).toString(16);
+        }
 
         return "#"+ (
             (r.length == 1 ? "0"+ r : r) +
@@ -405,7 +552,9 @@ jexcel.download = (function(el) {
         // Get worksheets
         if (Array.isArray(el.jexcel)) {
             for (var t = 0; t < el.jexcel.length; t++) {
-                plugin.createWorksheet(el.jexcel[t]);
+                if(plugin.options.sheets == null || (Array.isArray(plugin.options.sheets) && plugin.options.sheets.indexOf(t)>-1) || plugin.options.sheets == t) {
+                    plugin.createWorksheet(el.jexcel[t]);
+                }
             }
         } else {
             plugin.createWorksheet(el.jexcel);
@@ -433,5 +582,5 @@ jexcel.download = (function(el) {
             pom.click();
             pom.parentNode.removeChild(pom);
         }
-    }();
+    }(plugin.options.filename, plugin.options.author);
 });
