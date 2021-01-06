@@ -27,6 +27,7 @@ jexcel.download = (function(el, options){
          header: false,
          computedStyle: false,
          styleHeader: 'border: 1px solid #cccccc;background-color: #f3f3f3;text-align: center;',
+         wrapText: false
     }
     
 
@@ -121,6 +122,7 @@ jexcel.download = (function(el, options){
                     o.columnName = jexcel.helpers.getColumnNameFromCoords(i, j);
                     // Set data;
                     o.data = this.data[j][i];
+                    o.data = o.data.replace(/(?:\r\n|\r|\n)/g, '&#10;');
                     // Get comments
                     o.comments = this.getComments(o.columnName);
                     // Style
@@ -215,7 +217,6 @@ jexcel.download = (function(el, options){
             } else {
                 var val = this.instance.getStyle(columnName);
             }
-
             if (val) {
                 return plugin.makeStyle(val);
             } else {
@@ -362,7 +363,13 @@ jexcel.download = (function(el, options){
 
        if (css['text-align']) {
            var v = css['text-align'].charAt(0).toUpperCase() + css['text-align'].slice(1);
-           style.push('<Alignment ss:Horizontal="' + v + '" />');
+            if(plugin.options.wrapText) {
+                style.push('<Alignment ss:Horizontal="' + v + '" ss:Vertical="Center" ss:WrapText="1"/>');
+            } else {
+                style.push('<Alignment ss:Horizontal="' + v + '" />');
+            }
+       } else if(plugin.options.wrapText) {
+           style.push('<Alignment ss:Vertical="Center" ss:WrapText="1"/>');
        }
 
        var Borders = [];
@@ -455,7 +462,7 @@ jexcel.download = (function(el, options){
               style.push('<Interior ss:Color="'+v+'" ss:Pattern="Solid"/>');
            }
        }
-
+       
        return style.join('');
    }
 
